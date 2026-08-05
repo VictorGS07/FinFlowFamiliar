@@ -85,6 +85,21 @@
         .kpi-card.income .kpi-amount { color: var(--accent-green); }
         .kpi-card.expense .kpi-amount { color: var(--accent-red); }
 
+        /* WIDGET SALUD FINANCIERA */
+        .health-card {
+            display: flex; flex-direction: column; gap: 10px;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(15, 23, 42, 0.6) 100%);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+        .health-header { display: flex; justify-content: space-between; align-items: center; }
+        .health-badge {
+            font-size: 0.7rem; font-weight: 700; padding: 4px 10px; border-radius: 20px;
+            background-color: rgba(16, 185, 129, 0.15); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .health-metrics { display: flex; justify-content: space-between; align-items: baseline; }
+        .health-rate { font-size: 1.4rem; font-weight: 800; color: var(--text-main); }
+        .health-subtext { font-size: 0.75rem; color: var(--text-sub); }
+
         /* PRESUPUESTO */
         .budget-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: var(--text-sub); margin-bottom: 8px; }
         .budget-bar-bg { width: 100%; height: 8px; background-color: rgba(255, 255, 255, 0.05); border-radius: 4px; overflow: hidden; }
@@ -116,6 +131,14 @@
             transition: background-color 0.2s;
         }
         .btn-secondary:hover { background-color: rgba(255, 255, 255, 0.15); }
+
+        /* GASTOS FIJOS / RECURRENTES */
+        .fixed-tx-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+        .fixed-tx-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 12px; background-color: rgba(7, 10, 18, 0.4); border-radius: 8px;
+            border: 1px dashed rgba(255, 255, 255, 0.1); font-size: 0.8rem;
+        }
 
         /* HISTORIAL */
         .tx-list { display: flex; flex-direction: column; gap: 8px; max-height: 260px; overflow-y: auto; }
@@ -194,6 +217,24 @@
             </div>
         </div>
 
+        <!-- WIDGET SALUD FINANCIERA -->
+        <div class="card health-card" id="health-card">
+            <div class="health-header">
+                <span class="card-title" style="font-size:0.85rem;">💡 Salud Financiera & Ahorro</span>
+                <span class="health-badge" id="health-status-badge">Sin datos</span>
+            </div>
+            <div class="health-metrics">
+                <div>
+                    <div class="health-rate" id="health-savings-rate">0%</div>
+                    <div class="health-subtext">Tasa de Ahorro</div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 0.95rem; font-weight: 700; color: var(--text-main);" id="health-savings-amount">$0</div>
+                    <div class="health-subtext">Capacidad de Ahorro</div>
+                </div>
+            </div>
+        </div>
+
         <!-- PRESUPUESTO -->
         <div class="card">
             <div class="card-title" style="margin-bottom:8px;">🎯 Presupuesto Mensual</div>
@@ -207,6 +248,32 @@
             <div class="budget-input-group">
                 <input type="number" id="budget-input" class="form-control" placeholder="Fijar meta ($ CLP)" style="padding: 6px 10px;">
                 <button type="button" class="btn-secondary" id="btn-save-budget">Guardar Meta</button>
+            </div>
+        </div>
+
+        <!-- GASTOS FIJOS / RECURRENTES -->
+        <div class="card">
+            <div class="card-header-flex">
+                <div class="card-title">📌 Gastos Fijos Recurrentes</div>
+                <button type="button" class="btn-secondary" id="btn-apply-fixed" style="background: rgba(16, 185, 129, 0.2); color: #10b981; border-color: rgba(16, 185, 129, 0.3);">⚡ Cargar al Mes</button>
+            </div>
+            <form id="fixed-tx-form" class="form-grid">
+                <div class="form-row">
+                    <input type="text" id="fixed-desc" class="form-control" placeholder="Concepto (ej: Netflix)" required>
+                    <input type="number" id="fixed-amount" class="form-control" placeholder="Monto ($)" required>
+                </div>
+                <div class="form-row">
+                    <select id="fixed-category" class="form-control">
+                        <option value="Hogar">Hogar / Servicios</option>
+                        <option value="Alimentación">Alimentación</option>
+                        <option value="Ocio">Ocio / Salidas</option>
+                        <option value="Otros">Otros</option>
+                    </select>
+                    <button type="submit" class="btn-secondary" style="font-weight:700;">+ Agregar Fijo</button>
+                </div>
+            </form>
+            <div class="fixed-tx-list" id="fixed-container">
+                <!-- Lista de fijos vacía por defecto -->
             </div>
         </div>
 
@@ -254,11 +321,14 @@
             </div>
         </div>
 
-        <!-- HISTORIAL -->
+        <!-- HISTORIAL CON BUSCADOR -->
         <div class="card">
-            <div class="card-header-flex">
+            <div class="card-header-flex" style="flex-wrap: wrap; gap: 8px;">
                 <div class="card-title">📜 Historial de Movimientos</div>
                 <button type="button" class="btn-secondary" id="btn-export-csv">📥 Exportar CSV</button>
+            </div>
+            <div style="margin-bottom: 12px; margin-top: 4px;">
+                <input type="text" id="tx-search-input" class="form-control" placeholder="🔍 Buscar por concepto o categoría..." style="padding: 8px 12px; font-size: 0.8rem;">
             </div>
             <div class="tx-list" id="tx-container">
                 <p class="tx-empty">Aún no hay transacciones en este mes.</p>
@@ -266,13 +336,14 @@
         </div>
     </div>
 
-    <!-- LÓGICA JAVASCRIPT COMPLETA CON DETECTOR DE ACTUALIZACIÓN SW -->
+    <!-- LÓGICA JAVASCRIPT COMPLETA CON MÓDULO DE GASTOS FIJOS -->
     <script>
     (() => {
       'use strict';
 
       const STORAGE_KEY = 'finflow_transactions';
       const BUDGET_KEY = 'finflow_monthly_budget';
+      const FIXED_KEY = 'finflow_fixed_transactions';
       const VALID_TYPES = ['gasto', 'ingreso'];
       const VALID_CATEGORIES = ['Hogar', 'Alimentación', 'Ocio', 'Sueldo', 'Otros'];
 
@@ -282,9 +353,14 @@
 
       const dom = {
         filterMonth: document.getElementById('filter-month'),
+        searchInput: document.getElementById('tx-search-input'),
         balance: document.getElementById('disp-balance'),
         income: document.getElementById('disp-income'),
         expense: document.getElementById('disp-expense'),
+        healthBadge: document.getElementById('health-status-badge'),
+        healthRate: document.getElementById('health-savings-rate'),
+        healthAmount: document.getElementById('health-savings-amount'),
+        healthCard: document.getElementById('health-card'),
         form: document.getElementById('tx-form'),
         editId: document.getElementById('tx-edit-id'),
         desc: document.getElementById('tx-desc'),
@@ -304,10 +380,17 @@
         btnExportCsv: document.getElementById('btn-export-csv'),
         btnBackupExport: document.getElementById('btn-backup-export'),
         btnBackupImport: document.getElementById('btn-backup-import'),
-        fileInputJson: document.getElementById('file-input-json')
+        fileInputJson: document.getElementById('file-input-json'),
+        fixedForm: document.getElementById('fixed-tx-form'),
+        fixedDesc: document.getElementById('fixed-desc'),
+        fixedAmount: document.getElementById('fixed-amount'),
+        fixedCategory: document.getElementById('fixed-category'),
+        fixedContainer: document.getElementById('fixed-container'),
+        btnApplyFixed: document.getElementById('btn-apply-fixed')
       };
 
       let transactions = [];
+      let fixedTransactions = [];
       let monthlyBudget = 0;
 
       function loadData() {
@@ -315,6 +398,10 @@
           const raw = localStorage.getItem(STORAGE_KEY);
           transactions = raw ? JSON.parse(raw) : [];
           if (!Array.isArray(transactions)) transactions = [];
+
+          const rawFixed = localStorage.getItem(FIXED_KEY);
+          fixedTransactions = rawFixed ? JSON.parse(rawFixed) : [];
+          if (!Array.isArray(fixedTransactions)) fixedTransactions = [];
 
           const rawBudget = localStorage.getItem(BUDGET_KEY);
           monthlyBudget = rawBudget ? parseFloat(rawBudget) : 0;
@@ -326,24 +413,99 @@
 
       function saveData() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
+        localStorage.setItem(FIXED_KEY, JSON.stringify(fixedTransactions));
       }
 
       function getFilteredTransactions() {
         const selectedMonth = dom.filterMonth.value;
-        if (!selectedMonth) return transactions;
-        return transactions.filter(t => t.date.startsWith(selectedMonth));
+        const searchTerm = dom.searchInput ? dom.searchInput.value.toLowerCase().trim() : '';
+        
+        return transactions.filter(t => {
+          const matchesMonth = !selectedMonth || t.date.startsWith(selectedMonth);
+          const matchesSearch = !searchTerm || 
+                                t.desc.toLowerCase().includes(searchTerm) || 
+                                t.category.toLowerCase().includes(searchTerm);
+          return matchesMonth && matchesSearch;
+        });
       }
 
+      // MANEJO DE GASTOS FIJOS
+      function addFixedTransaction(e) {
+        e.preventDefault();
+        const item = {
+          id: (crypto.randomUUID ? crypto.randomUUID() : Date.now()),
+          desc: dom.fixedDesc.value.trim(),
+          amount: parseFloat(dom.fixedAmount.value),
+          category: dom.fixedCategory.value
+        };
+        fixedTransactions.push(item);
+        saveData();
+        dom.fixedForm.reset();
+        renderFixedList();
+      }
+
+      function deleteFixedTransaction(id) {
+        fixedTransactions = fixedTransactions.filter(f => String(f.id) !== String(id));
+        saveData();
+        renderFixedList();
+      }
+
+      function applyFixedToCurrentMonth() {
+        if (fixedTransactions.length === 0) {
+          alert("No tienes gastos fijos guardados.");
+          return;
+        }
+
+        const today = new Date().toISOString().split('T')[0];
+        fixedTransactions.forEach(f => {
+          transactions.push({
+            id: (crypto.randomUUID ? crypto.randomUUID() : Date.now() + Math.random()),
+            desc: f.desc,
+            amount: f.amount,
+            type: 'gasto',
+            category: f.category,
+            date: today
+          });
+        });
+
+        saveData();
+        render();
+        alert(`¡Se cargaron ${fixedTransactions.length} gastos fijos al mes actual!`);
+      }
+
+      function renderFixedList() {
+        dom.fixedContainer.innerHTML = '';
+        if (fixedTransactions.length === 0) {
+          dom.fixedContainer.innerHTML = '<p class="tx-empty" style="padding:4px;">No hay gastos fijos configurados.</p>';
+          return;
+        }
+
+        fixedTransactions.forEach(f => {
+          const div = document.createElement('div');
+          div.className = 'fixed-tx-item';
+          div.innerHTML = `
+            <span>📌 <strong>${escapeHtml(f.desc)}</strong> (${escapeHtml(f.category)})</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="color:var(--accent-red); font-weight:700;">${currencyFormatter.format(f.amount)}</span>
+              <button type="button" class="btn-icon delete-fixed" data-id="${f.id}" title="Eliminar fijo">✕</button>
+            </div>
+          `;
+          dom.fixedContainer.appendChild(div);
+        });
+      }
+
+      // BACKUP JSON
       function exportJSONBackup() {
-        if (transactions.length === 0) {
+        if (transactions.length === 0 && fixedTransactions.length === 0) {
           alert("No hay datos para respaldar.");
           return;
         }
         const backupData = {
-          version: '1.0',
+          version: '1.1',
           timestamp: new Date().toISOString(),
           monthlyBudget: monthlyBudget,
-          transactions: transactions
+          transactions: transactions,
+          fixedTransactions: fixedTransactions
         };
         const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
         const link = document.createElement('a');
@@ -362,6 +524,7 @@
             const imported = JSON.parse(event.target.result);
             if (imported && Array.isArray(imported.transactions)) {
               transactions = imported.transactions;
+              fixedTransactions = imported.fixedTransactions || [];
               monthlyBudget = imported.monthlyBudget || 0;
               saveData();
               localStorage.setItem(BUDGET_KEY, monthlyBudget);
@@ -378,6 +541,7 @@
         reader.readAsText(file);
       }
 
+      // CRUD MOVIMIENTOS
       function addOrUpdateTransaction(data) {
         if (data.id) {
           const idx = transactions.findIndex(t => String(t.id) === String(data.id));
@@ -442,6 +606,41 @@
         return { income, expense, balance: income - expense };
       }
 
+      function renderHealthWidget() {
+        const { income, expense, balance } = calculateTotals();
+        
+        if (income === 0) {
+          dom.healthBadge.textContent = "Sin Ingresos";
+          dom.healthBadge.style.backgroundColor = "rgba(148, 163, 184, 0.15)";
+          dom.healthBadge.style.color = "var(--text-sub)";
+          dom.healthBadge.style.borderColor = "rgba(148, 163, 184, 0.3)";
+          dom.healthRate.textContent = "0%";
+          dom.healthAmount.textContent = currencyFormatter.format(0);
+          return;
+        }
+
+        const savingsRate = Math.round((balance / income) * 100);
+        dom.healthRate.textContent = `${savingsRate}%`;
+        dom.healthAmount.textContent = currencyFormatter.format(balance);
+
+        if (savingsRate >= 20) {
+          dom.healthBadge.textContent = "🟢 Excelente (Regla 50/30/20)";
+          dom.healthBadge.style.backgroundColor = "rgba(16, 185, 129, 0.15)";
+          dom.healthBadge.style.color = "var(--accent-green)";
+          dom.healthBadge.style.borderColor = "rgba(16, 185, 129, 0.3)";
+        } else if (savingsRate > 0) {
+          dom.healthBadge.textContent = "🟡 Aceptable";
+          dom.healthBadge.style.backgroundColor = "rgba(245, 158, 11, 0.15)";
+          dom.healthBadge.style.color = "var(--accent-yellow)";
+          dom.healthBadge.style.borderColor = "rgba(245, 158, 11, 0.3)";
+        } else {
+          dom.healthBadge.textContent = "🔴 Alerta (Déficit)";
+          dom.healthBadge.style.backgroundColor = "rgba(244, 63, 94, 0.15)";
+          dom.healthBadge.style.color = "var(--accent-red)";
+          dom.healthBadge.style.borderColor = "rgba(244, 63, 94, 0.3)";
+        }
+      }
+
       function getCategoryTotals() {
         const totals = {};
         VALID_CATEGORIES.forEach((cat) => { totals[cat] = 0; });
@@ -501,7 +700,10 @@
         const currentList = getFilteredTransactions();
         
         if (currentList.length === 0) {
-          dom.container.innerHTML = '<p class="tx-empty">Aún no hay transacciones en este mes.</p>';
+          const isSearching = dom.searchInput && dom.searchInput.value.trim() !== '';
+          dom.container.innerHTML = isSearching 
+            ? '<p class="tx-empty">No se encontraron coincidencia para tu búsqueda.</p>' 
+            : '<p class="tx-empty">Aún no hay transacciones en este mes.</p>';
           return;
         }
 
@@ -532,7 +734,9 @@
 
       function render() {
         renderKpis();
+        renderHealthWidget();
         renderBudget();
+        renderFixedList();
         renderTransactions();
         if (window.updateFinFlowChart) window.updateFinFlowChart();
       }
@@ -563,6 +767,11 @@
         if (deleteBtn) deleteTransaction(deleteBtn.dataset.id);
       }
 
+      function handleFixedClick(e) {
+        const deleteFixedBtn = e.target.closest('.delete-fixed');
+        if (deleteFixedBtn) deleteFixedTransaction(deleteFixedBtn.dataset.id);
+      }
+
       function init() {
         loadData();
         
@@ -574,10 +783,17 @@
         render();
 
         dom.filterMonth.addEventListener('change', render);
+        if (dom.searchInput) dom.searchInput.addEventListener('input', render);
+        
         dom.form.addEventListener('submit', handleSubmit);
         dom.container.addEventListener('click', handleContainerClick);
         dom.btnCancelEdit.addEventListener('click', resetForm);
         dom.btnExportCsv.addEventListener('click', exportToCSV);
+
+        // Eventos Gastos Fijos
+        dom.fixedForm.addEventListener('submit', addFixedTransaction);
+        dom.fixedContainer.addEventListener('click', handleFixedClick);
+        dom.btnApplyFixed.addEventListener('click', applyFixedToCurrentMonth);
 
         dom.btnBackupExport.addEventListener('click', exportJSONBackup);
         dom.btnBackupImport.addEventListener('click', () => dom.fileInputJson.click());
@@ -590,7 +806,6 @@
           renderBudget();
         });
 
-        // REGISTRO DE SERVICE WORKER CON AUTO-REFRESCO AL DETECTAR CAMBIOS
         if ('serviceWorker' in navigator) {
           navigator.serviceWorker.register('sw.js').then(reg => {
             reg.addEventListener('updatefound', () => {
