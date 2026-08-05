@@ -266,7 +266,7 @@
         </div>
     </div>
 
-    <!-- LÓGICA JAVASCRIPT COMPLETA -->
+    <!-- LÓGICA JAVASCRIPT COMPLETA CON DETECTOR DE ACTUALIZACIÓN SW -->
     <script>
     (() => {
       'use strict';
@@ -590,8 +590,18 @@
           renderBudget();
         });
 
+        // REGISTRO DE SERVICE WORKER CON AUTO-REFRESCO AL DETECTAR CAMBIOS
         if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.register('sw.js').catch(err => console.log('SW no registrado', err));
+          navigator.serviceWorker.register('sw.js').then(reg => {
+            reg.addEventListener('updatefound', () => {
+              const newWorker = reg.installing;
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  window.location.reload();
+                }
+              });
+            });
+          }).catch(err => console.log('SW no registrado', err));
         }
       }
 
