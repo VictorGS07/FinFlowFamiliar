@@ -7,6 +7,8 @@
     <!-- Configuración PWA -->
     <meta name="theme-color" content="#090d16">
     <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icon.svg">
     
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -344,6 +346,7 @@
       const STORAGE_KEY = 'finsimple_transactions';
       const BUDGET_KEY = 'finsimple_monthly_budget';
       const FIXED_KEY = 'finsimple_fixed_transactions';
+      const FIXED_APPLIED_KEY = 'finsimple_fixed_applied_months';
       const VALID_TYPES = ['gasto', 'ingreso'];
       const VALID_CATEGORIES = ['Hogar', 'Alimentación', 'Ocio', 'Sueldo', 'Otros'];
 
@@ -392,6 +395,7 @@
       let transactions = [];
       let fixedTransactions = [];
       let monthlyBudget = 0;
+      let fixedAppliedMonths = [];
 
       function loadData() {
         try {
@@ -406,6 +410,10 @@
           const rawBudget = localStorage.getItem(BUDGET_KEY) || localStorage.getItem('finflow_monthly_budget');
           monthlyBudget = rawBudget ? parseFloat(rawBudget) : 0;
           dom.budgetInput.value = monthlyBudget > 0 ? monthlyBudget : '';
+
+          const rawApplied = localStorage.getItem(FIXED_APPLIED_KEY);
+          fixedAppliedMonths = rawApplied ? JSON.parse(rawApplied) : [];
+          if (!Array.isArray(fixedAppliedMonths)) fixedAppliedMonths = [];
         } catch (err) {
           console.error('Error al leer localStorage:', err);
         }
@@ -416,16 +424,21 @@
         localStorage.setItem(FIXED_KEY, JSON.stringify(fixedTransactions));
       }
 
-      function getFilteredTransactions() {
+      // Filtra SOLO por mes. Usada para KPIs, presupuesto, salud financiera y gráfico:
+      // estos no deben cambiar mientras el usuario escribe en el buscador.
+      function getMonthFilteredTransactions() {
         const selectedMonth = dom.filterMonth.value;
+        return transactions.filter(t => !selectedMonth || t.date.startsWith(selectedMonth));
+      }
+
+      // Filtra por mes + búsqueda. Usada SOLO para la lista visual del historial.
+      function getFilteredTransactions() {
         const searchTerm = dom.searchInput ? dom.searchInput.value.toLowerCase().trim() : '';
-        
-        return transactions.filter(t => {
-          const matchesMonth = !selectedMonth || t.date.startsWith(selectedMonth);
-          const matchesSearch = !searchTerm || 
-                                t.desc.toLowerCase().includes(searchTerm) || 
+        return getMonthFilteredTransactions().filter(t => {
+          const matchesSearch = !searchTerm ||
+                                t.desc.toLowerCase().includes(searchTerm) ||
                                 t.category.toLowerCase().includes(searchTerm);
-          return matchesMonth && matchesSearch;
+          return matchesSearch;
         });
       }
 
@@ -455,7 +468,18 @@
           return;
         }
 
-        const today = new Date().toISOString().split('T')[0];
+        const now = new Date();
+        const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+        if (fixedAppliedMonths.includes(yearMonth)) {
+          const confirmDuplicate = confirm(
+            "Ya aplicaste los gastos fijos este mes. ¿Querés cargarlos de nuevo igual? " +
+            "(Esto puede duplicar los movimientos)"
+          );
+          if (!confirmDuplicate) return;
+        }
+
+        const today = now.toISOString().split('T')[0];
         fixedTransactions.forEach(f => {
           transactions.push({
             id: (crypto.randomUUID ? crypto.randomUUID() : Date.now() + Math.random()),
@@ -466,6 +490,11 @@
             date: today
           });
         });
+
+        if (!fixedAppliedMonths.includes(yearMonth)) {
+          fixedAppliedMonths.push(yearMonth);
+          localStorage.setItem(FIXED_APPLIED_KEY, JSON.stringify(fixedAppliedMonths));
+        }
 
         saveData();
         render();
@@ -596,7 +625,7 @@
 
       function calculateTotals() {
         let income = 0; let expense = 0;
-        const currentList = getFilteredTransactions();
+        const currentList = getMonthFilteredTransactions();
         currentList.forEach((tx) => {
           if (tx.type === 'ingreso') income += tx.amount;
           else if (tx.type === 'gasto') expense += tx.amount;
@@ -642,7 +671,7 @@
       function getCategoryTotals() {
         const totals = {};
         VALID_CATEGORIES.forEach((cat) => { totals[cat] = 0; });
-        const currentList = getFilteredTransactions();
+        const currentList = getMonthFilteredTransactions();
         currentList.filter((tx) => tx.type === 'gasto').forEach((tx) => {
           totals[tx.category] = (totals[tx.category] || 0) + tx.amount;
         });
@@ -668,6 +697,14 @@
         else dom.budgetBar.style.background = "linear-gradient(90deg, #10b981, #3b82f6)";
       }
 
+      function csvEscape(value) {
+        const str = String(value);
+        if (str.includes(';') || str.includes('"') || str.includes('\n')) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      }
+
       function exportToCSV() {
         const currentList = getFilteredTransactions();
         if (currentList.length === 0) {
@@ -676,10 +713,11 @@
         }
         let csv = "ID;Fecha;Concepto;Tipo;Categoria;Monto\n";
         currentList.forEach(t => {
-          csv += `${t.id};${t.date};"${t.desc}";${t.type};${t.category};${t.amount}\n`;
+          csv += `${csvEscape(t.id)};${csvEscape(t.date)};${csvEscape(t.desc)};${csvEscape(t.type)};${csvEscape(t.category)};${t.amount}\n`;
         });
 
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        // BOM (\uFEFF) para que Excel reconozca tildes/ñ correctamente
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
         link.download = `FinSimple_${dom.filterMonth.value || 'Export'}.csv`;
