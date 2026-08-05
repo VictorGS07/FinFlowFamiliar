@@ -1,4 +1,4 @@
-const CACHE_NAME = 'finflow-v3'; // Al cambiar a v3, el navegador sabe que hay una versión nueva
+const CACHE_NAME = 'finflow-v4'; // Al cambiar a v4, el navegador sabe que hay una versión nueva
 const ASSETS = [
   './',
   './index.html',
