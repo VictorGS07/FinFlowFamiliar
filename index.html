@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinFlow - Control Financiero Personal</title>
+    <title>FinSimple - Finanzas Personales</title>
     <!-- Configuración PWA -->
     <meta name="theme-color" content="#090d16">
     <link rel="manifest" href="manifest.json">
@@ -43,10 +43,10 @@
         /* HEADER */
         .app-header { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; }
         .app-title { 
-            font-size: 1.3rem; font-weight: 800; 
-            background: linear-gradient(135deg, #60a5fa 0%, #a855f7 100%);
+            font-size: 1.35rem; font-weight: 800; 
+            background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            display: flex; align-items: center; gap: 8px; 
+            display: flex; align-items: center; gap: 8px; letter-spacing: -0.3px;
         }
         
         .header-actions { display: flex; gap: 6px; }
@@ -120,9 +120,9 @@
         .form-control:focus { outline: none; border-color: var(--accent-blue); }
 
         .btn-submit {
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: #fff; border: none;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border: none;
             padding: 12px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: opacity 0.2s;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
         .btn-submit:active { opacity: 0.85; }
         .btn-secondary {
@@ -185,9 +185,9 @@
 <body>
 
     <div class="dashboard-container">
-        <!-- HEADER -->
+        <!-- HEADER FINSIMPLE -->
         <header class="app-header">
-            <div class="app-title">💳 FinFlow</div>
+            <div class="app-title">💚 FinSimple</div>
             <div class="header-actions">
                 <button type="button" class="btn-secondary" id="btn-backup-export" title="Guardar respaldo JSON">💾 Backup</button>
                 <button type="button" class="btn-secondary" id="btn-backup-import" title="Cargar respaldo JSON">📤 Cargar</button>
@@ -273,7 +273,7 @@
                 </div>
             </form>
             <div class="fixed-tx-list" id="fixed-container">
-                <!-- Lista de fijos vacía por defecto -->
+                <!-- Lista de fijos -->
             </div>
         </div>
 
@@ -336,14 +336,14 @@
         </div>
     </div>
 
-    <!-- LÓGICA JAVASCRIPT COMPLETA CON MÓDULO DE GASTOS FIJOS -->
+    <!-- LÓGICA JAVASCRIPT COMPLETA FINSIMPLE -->
     <script>
     (() => {
       'use strict';
 
-      const STORAGE_KEY = 'finflow_transactions';
-      const BUDGET_KEY = 'finflow_monthly_budget';
-      const FIXED_KEY = 'finflow_fixed_transactions';
+      const STORAGE_KEY = 'finsimple_transactions';
+      const BUDGET_KEY = 'finsimple_monthly_budget';
+      const FIXED_KEY = 'finsimple_fixed_transactions';
       const VALID_TYPES = ['gasto', 'ingreso'];
       const VALID_CATEGORIES = ['Hogar', 'Alimentación', 'Ocio', 'Sueldo', 'Otros'];
 
@@ -395,15 +395,15 @@
 
       function loadData() {
         try {
-          const raw = localStorage.getItem(STORAGE_KEY);
+          const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('finflow_transactions');
           transactions = raw ? JSON.parse(raw) : [];
           if (!Array.isArray(transactions)) transactions = [];
 
-          const rawFixed = localStorage.getItem(FIXED_KEY);
+          const rawFixed = localStorage.getItem(FIXED_KEY) || localStorage.getItem('finflow_fixed_transactions');
           fixedTransactions = rawFixed ? JSON.parse(rawFixed) : [];
           if (!Array.isArray(fixedTransactions)) fixedTransactions = [];
 
-          const rawBudget = localStorage.getItem(BUDGET_KEY);
+          const rawBudget = localStorage.getItem(BUDGET_KEY) || localStorage.getItem('finflow_monthly_budget');
           monthlyBudget = rawBudget ? parseFloat(rawBudget) : 0;
           dom.budgetInput.value = monthlyBudget > 0 ? monthlyBudget : '';
         } catch (err) {
@@ -429,7 +429,6 @@
         });
       }
 
-      // MANEJO DE GASTOS FIJOS
       function addFixedTransaction(e) {
         e.preventDefault();
         const item = {
@@ -494,14 +493,14 @@
         });
       }
 
-      // BACKUP JSON
       function exportJSONBackup() {
         if (transactions.length === 0 && fixedTransactions.length === 0) {
           alert("No hay datos para respaldar.");
           return;
         }
         const backupData = {
-          version: '1.1',
+          appName: 'FinSimple',
+          version: '1.2',
           timestamp: new Date().toISOString(),
           monthlyBudget: monthlyBudget,
           transactions: transactions,
@@ -510,7 +509,7 @@
         const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = `FinFlow_Backup_${new Date().toISOString().split('T')[0]}.json`;
+        link.download = `FinSimple_Backup_${new Date().toISOString().split('T')[0]}.json`;
         link.click();
       }
 
@@ -530,9 +529,9 @@
               localStorage.setItem(BUDGET_KEY, monthlyBudget);
               dom.budgetInput.value = monthlyBudget > 0 ? monthlyBudget : '';
               render();
-              alert("¡Copia de seguridad restaurada con éxito!");
+              alert("¡Copia de seguridad restaurada con éxito en FinSimple!");
             } else {
-              alert("El archivo subido no tiene un formato válido de FinFlow.");
+              alert("El archivo subido no tiene un formato válido.");
             }
           } catch (err) {
             alert("Error al leer el archivo JSON.");
@@ -541,7 +540,6 @@
         reader.readAsText(file);
       }
 
-      // CRUD MOVIMIENTOS
       function addOrUpdateTransaction(data) {
         if (data.id) {
           const idx = transactions.findIndex(t => String(t.id) === String(data.id));
@@ -684,7 +682,7 @@
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = `FinFlow_${dom.filterMonth.value || 'Export'}.csv`;
+        link.download = `FinSimple_${dom.filterMonth.value || 'Export'}.csv`;
         link.click();
       }
 
@@ -790,7 +788,6 @@
         dom.btnCancelEdit.addEventListener('click', resetForm);
         dom.btnExportCsv.addEventListener('click', exportToCSV);
 
-        // Eventos Gastos Fijos
         dom.fixedForm.addEventListener('submit', addFixedTransaction);
         dom.fixedContainer.addEventListener('click', handleFixedClick);
         dom.btnApplyFixed.addEventListener('click', applyFixedToCurrentMonth);
