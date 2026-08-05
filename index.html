@@ -266,7 +266,7 @@
         </div>
     </div>
 
-    <!-- LÓGICA JAVASCRIPT COMPLETA CON BACKUP JSON -->
+    <!-- LÓGICA JAVASCRIPT COMPLETA -->
     <script>
     (() => {
       'use strict';
@@ -334,7 +334,6 @@
         return transactions.filter(t => t.date.startsWith(selectedMonth));
       }
 
-      // BACKUP JSON (EXPORTAR E IMPORTAR)
       function exportJSONBackup() {
         if (transactions.length === 0) {
           alert("No hay datos para respaldar.");
@@ -379,7 +378,6 @@
         reader.readAsText(file);
       }
 
-      // CRUD
       function addOrUpdateTransaction(data) {
         if (data.id) {
           const idx = transactions.findIndex(t => String(t.id) === String(data.id));
@@ -434,7 +432,6 @@
         dom.date.value = new Date().toISOString().split('T')[0];
       }
 
-      // CÁLCULOS
       function calculateTotals() {
         let income = 0; let expense = 0;
         const currentList = getFilteredTransactions();
@@ -492,7 +489,6 @@
         link.click();
       }
 
-      // RENDER
       function renderKpis() {
         const { income, expense, balance } = calculateTotals();
         dom.balance.textContent = currencyFormatter.format(balance);
@@ -547,7 +543,6 @@
         return div.innerHTML;
       }
 
-      // EVENTOS
       function handleSubmit(e) {
         e.preventDefault();
         addOrUpdateTransaction({
@@ -584,7 +579,6 @@
         dom.btnCancelEdit.addEventListener('click', resetForm);
         dom.btnExportCsv.addEventListener('click', exportToCSV);
 
-        // Backup Listeners
         dom.btnBackupExport.addEventListener('click', exportJSONBackup);
         dom.btnBackupImport.addEventListener('click', () => dom.fileInputJson.click());
         dom.fileInputJson.addEventListener('change', importJSONBackup);
@@ -606,7 +600,7 @@
     })();
     </script>
 
-    <!-- JS CHART.JS CON COLORES ADAPTADOS AL NUEVO TEMA -->
+    <!-- JS CHART.JS -->
     <script>
         let categoryChart = null;
 
@@ -665,11 +659,6 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             initChart();
-            window.updateFinFlowChart();
-        });
-    </script>
-</body>
-</html>
             window.updateFinFlowChart();
         });
     </script>
